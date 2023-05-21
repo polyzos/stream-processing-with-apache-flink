@@ -4,7 +4,7 @@ This repository contains the code for the book **Stream Processing with Apache F
 
 
 <p align="center">
-    <img src="images/cover.png" width="500" height="800">
+    <img src="assets/cover.png" width="500" height="800">
 </p>
 
 
