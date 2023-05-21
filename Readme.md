@@ -10,7 +10,7 @@ This repository contains the code for the book **Stream Processing with Apache F
 
 ### Table of Contents
 1. [Environment Setup](#environment-setup)
-2. [Warmup - Connecting to Pulsar](#warmup)
+2. [Register UDF](#register-udf)
 
 
 ### Environment Setup
@@ -27,5 +27,16 @@ When the cluster is up and running successfully run the following command:
 ./setup.sh
 ```
 
-### Warmup
-**Outcomes:** How can we connect to Kafka and start consuming events.
+### Register UDF
+```shell
+CREATE FUNCTION maskfn  AS 'io.streamingledger.udfs.MaskingFn'  LANGUAGE JAVA USING JAR '/opt/flink/jars/spf-0.1.0.jar';
+CREATE FUNCTION splitfn AS 'io.streamingledger.udfs.SplitFn'    LANGUAGE JAVA USING JAR '/opt/flink/jars/spf-0.1.0.jar';
+
+CREATE TEMPORARY VIEW sample AS
+SELECT * 
+FROM transactions 
+LIMIT 10;
+
+SELECT transactionId, maskfn(UUID()) AS maskedCN FROM sample;
+SELECT transactionId, operation, word, length FROM sample, LATERAL TABLE(splitfn(operation));
+```
