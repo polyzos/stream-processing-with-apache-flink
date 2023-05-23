@@ -50,7 +50,7 @@ CREATE TABLE customers (
 ) WITH (
     'connector' = 'upsert-kafka',
     'topic' = 'customers',
-    'properties.bootstrap.servers' = 'localhost:9092',
+    'properties.bootstrap.servers' = 'kafka:29092',
     'key.format' = 'raw',
     'value.format' = 'json',
     'properties.group.id' = 'group.customers'
@@ -76,13 +76,15 @@ CREATE TABLE accounts (
 ) WITH (
     'connector' = 'upsert-kafka',
     'topic' = 'accounts',
-    'properties.bootstrap.servers' = 'redpanda-0:9092',
+    'properties.bootstrap.servers' = 'kafka:29092',
     'key.format' = 'raw',
     'value.format' = 'json',
     'properties.group.id' = 'group.accounts'
-    );
+);
 
-SELECT * FROM accounts;
+SELECT *
+FROM accounts
+LIMIT 10;
 
 
 SELECT
@@ -139,3 +141,12 @@ SELECT
 FROM transactions
 WHERE amount > 180000
   and type = 'Credit';
+
+
+-- Deduplication
+SELECT transactionId, rowNum
+FROM (
+         SELECT *,
+                ROW_NUMBER() OVER (PARTITION BY transactionId ORDER BY eventTime_ltz) AS rowNum
+         FROM transactions)
+WHERE rowNum = 1;

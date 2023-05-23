@@ -3,8 +3,8 @@ services:
   kafka:
     image: 'bitnami/kafka:latest'
     container_name: kafka
-    volumes:
-      - ./logs/kafka:/bitnami/kafka
+#    volumes:
+#      - ./logs/kafka:/bitnami/kafka
     ports:
       - '9092:9092'
     environment:
