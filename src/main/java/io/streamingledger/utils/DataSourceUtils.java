@@ -11,7 +11,6 @@ import java.sql.Timestamp;
 import java.util.stream.Stream;
 
 public class DataSourceUtils {
-    private static final long TEN_MIN_TO_MS = 600000;
     public static Stream<String> loadDataFile(String fileName) throws IOException {
         return Files.lines(
                 Paths.get(System.getProperty("user.dir") + fileName)
@@ -54,7 +53,7 @@ public class DataSourceUtils {
                 tokens[17],
                 tokens[18],
                 tokens[19],
-                System.currentTimeMillis() - TEN_MIN_TO_MS
+                System.currentTimeMillis()
         );
     }
 
@@ -66,7 +65,7 @@ public class DataSourceUtils {
                 Integer.parseInt(tokens[1]),
                 tokens[2],
                 tokens[3],
-                System.currentTimeMillis() - TEN_MIN_TO_MS
+                System.currentTimeMillis()
         );
     }
 

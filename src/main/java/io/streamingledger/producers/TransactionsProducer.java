@@ -41,9 +41,9 @@ public class TransactionsProducer {
             Transaction transaction = it.next();
             if (slitTransactions) {
                 if (transaction.getType().equals("Credit")) {
-                    StreamingUtils.handleMessage(txnProducer, AppConfig.DEBITS_TOPIC, transaction.getTransactionId(), transaction);
-                } else {
                     StreamingUtils.handleMessage(txnProducer, AppConfig.CREDITS_TOPIC, transaction.getTransactionId(), transaction);
+                } else {
+                    StreamingUtils.handleMessage(txnProducer, AppConfig.DEBITS_TOPIC, transaction.getTransactionId(), transaction);
 
                 }
             } else {
