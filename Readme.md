@@ -2,7 +2,7 @@ Stream Processing with Apache Flink
 ------------------------------------
 
 <p align="center">
-    <img src="assets/cover.png" width="500" height="1200">
+    <img src="assets/cover.png" width="800" height="800">
 </p>
 
 This repository contains the code for the book **[Stream Processing: Hands-n with Apache Flink](https://leanpub.com/streamprocessingwithapacheflink)**.
