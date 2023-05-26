@@ -29,8 +29,9 @@ When the cluster is up and running successfully run the following command:
 
 ### Register UDF
 ```shell
-CREATE FUNCTION maskfn  AS 'io.streamingledger.udfs.MaskingFn'  LANGUAGE JAVA USING JAR '/opt/flink/jars/spf-0.1.0.jar';
-CREATE FUNCTION splitfn AS 'io.streamingledger.udfs.SplitFn'    LANGUAGE JAVA USING JAR '/opt/flink/jars/spf-0.1.0.jar';
+CREATE FUNCTION maskfn  AS 'io.streamingledger.udfs.MaskingFn'      LANGUAGE JAVA USING JAR '/opt/flink/jars/spf-0.1.0.jar';
+CREATE FUNCTION splitfn AS 'io.streamingledger.udfs.SplitFn'        LANGUAGE JAVA USING JAR '/opt/flink/jars/spf-0.1.0.jar';
+CREATE FUNCTION lookup  AS 'io.streamingledger.udfs.AsyncLookupFn'  LANGUAGE JAVA USING JAR '/opt/flink/jars/spf-0.1.0.jar';
 
 CREATE TEMPORARY VIEW sample AS
 SELECT * 
@@ -38,5 +39,11 @@ FROM transactions
 LIMIT 10;
 
 SELECT transactionId, maskfn(UUID()) AS maskedCN FROM sample;
-SELECT transactionId, operation, word, length FROM sample, LATERAL TABLE(splitfn(operation));
+SELECT * FROM transactions, LATERAL TABLE(splitfn(operation));
+
+SELECT 
+  transactionId,
+  lookupKey, 
+  requestTime 
+FROM sample, LATERAL TABLE(lookup(transactionId));
 ```

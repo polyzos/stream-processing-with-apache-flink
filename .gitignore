@@ -1,6 +1,7 @@
 target/
 logs/
 .idea/
+dependency-reduced-pom.xml
 
 !.mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
