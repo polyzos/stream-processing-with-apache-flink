@@ -134,7 +134,13 @@ FROM transactions AS t
 ON t.customerId = c.customerId;
 
 
-
+CREATE TABLE IF NOT EXISTS accounts (
+    accountId       VARCHAR(50)  PRIMARY KEY,
+    districtId      INT NOT NULL,
+    frequency       VARCHAR (50) NOT NULL,
+    creationDate    VARCHAR (50) NOT NULL,
+    updateTime      BIGINT NOT NULL
+    );
 
 CREATE TABLE accounts (
     accountId STRING,

@@ -34,4 +34,7 @@ docker exec -it kafka kafka-topics.sh --describe --topic customers --bootstrap-s
 
 docker exec -it kafka kafka-topics.sh --list --bootstrap-server localhost:9092
 
-docker exec -it kafka kafka-console-consumer.sh --topic transactions --from-beginning --bootstrap-server localhost:9092
+docker exec -it kafka kafka-console-consumer.sh \
+      --topic transactions \
+      --from-beginning \
+      --bootstrap-server localhost:9092
