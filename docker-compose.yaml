@@ -1,23 +1,50 @@
 version: "3.7"
 services:
-  kafka:
-    image: 'bitnami/kafka:latest'
-    container_name: kafka
-#    volumes:
-#      - ./logs/kafka:/bitnami/kafka
+  redpanda:
+    command:
+      - redpanda
+      - start
+      - --kafka-addr internal://0.0.0.0:9092,external://0.0.0.0:19092
+      - --advertise-kafka-addr internal://redpanda:9092,external://localhost:19092
+      - --pandaproxy-addr internal://0.0.0.0:8082,external://0.0.0.0:18082
+      - --advertise-pandaproxy-addr internal://redpanda:8082,external://localhost:18082
+      - --schema-registry-addr internal://0.0.0.0:8081,external://0.0.0.0:18081
+      - --rpc-addr redpanda:33145
+      - --advertise-rpc-addr redpanda:33145
+      - --smp 1
+      - --memory 1G
+      - --mode dev-container
+      - --default-log-level=debug
+    image: docker.redpanda.com/redpandadata/redpanda:v23.1.7
+    container_name: redpanda
+    volumes:
+      - ./logs/redpanda:/var/lib/redpanda/data
     ports:
-      - '9092:9092'
+      - "18081:18081"
+      - "18082:18082"
+      - "19092:19092"
+      - "19644:9644"
+  console:
+    container_name: redpanda-console
+    image: docker.redpanda.com/vectorized/console:v2.2.3
+    entrypoint: /bin/sh
+    command: -c 'echo "$$CONSOLE_CONFIG_FILE" > /tmp/config.yml; /app/console'
     environment:
-      KAFKA_ENABLE_KRAFT: yes
-      KAFKA_BROKER_ID: 1
-      KAFKA_CFG_NODE_ID: 1
-      ALLOW_PLAINTEXT_LISTENER: yes
-      KAFKA_CFG_CONTROLLER_QUORUM_VOTERS: 1@127.0.0.1:9093
-      KAFKA_CFG_CONTROLLER_LISTENER_NAMES: CONTROLLER
-      KAFKA_CFG_INTER_BROKER_LISTENER_NAME: PLAINTEXT
-      KAFKA_CFG_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
-      KAFKA_CFG_LISTENERS: PLAINTEXT://:29092,PLAINTEXT_HOST://0.0.0.0:9092,CONTROLLER://:9093
-      KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT,CONTROLLER:PLAINTEXT
+      CONFIG_FILEPATH: /tmp/config.yml
+      CONSOLE_CONFIG_FILE: |
+        kafka:
+          brokers: ["redpanda:9092"]
+          schemaRegistry:
+            enabled: true
+            urls: ["http://redpanda:8081"]
+        redpanda:
+          adminApi:
+            enabled: true
+            urls: ["http://redpanda:9644"]
+    ports:
+      - "8080:8080"
+    depends_on:
+      - redpanda
   jobmanager:
     build: .
     container_name: jobmanager
