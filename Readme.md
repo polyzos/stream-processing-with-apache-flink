@@ -43,7 +43,7 @@ SELECT * FROM transactions, LATERAL TABLE(splitfn(operation));
 
 SELECT 
   transactionId,
-  lookupKey, 
-  requestTime 
+  serviceResponse, 
+  responseTime 
 FROM sample, LATERAL TABLE(lookup(transactionId));
 ```

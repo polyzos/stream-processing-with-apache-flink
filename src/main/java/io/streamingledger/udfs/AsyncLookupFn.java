@@ -12,9 +12,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 
-@FunctionHint(output = @DataTypeHint("ROW<lookupKey STRING, requestTime INT>"))
+@FunctionHint(output = @DataTypeHint("ROW<serviceResponse STRING, responseTime INT>"))
 public class AsyncLookupFn extends TableFunction<Row> {
     private static final Logger logger
             = LoggerFactory.getLogger(AsyncLookupFn.class);
@@ -27,9 +26,8 @@ public class AsyncLookupFn extends TableFunction<Row> {
         super.open(context);
     }
 
-    public void eval(String lookupKey) throws InterruptedException, ExecutionException {
+    public void eval(String lookupKey) {
         logger.info("Performing lookup for key {}", lookupKey);
-
         List<CompletableFuture<Void>> futureList= new ArrayList<>();
 
         for (int i = 1; i <= 3; i ++ ) {
@@ -42,7 +40,8 @@ public class AsyncLookupFn extends TableFunction<Row> {
                 } catch (InterruptedException e) {
                     throw new RuntimeException(e);
                 }
-                collect(Row.of("Service-" + serviceId, delay));
+                var response = "Service-" + serviceId + " response.";
+                collect(Row.of(response, delay));
 
             });
             futureList.add(future);
