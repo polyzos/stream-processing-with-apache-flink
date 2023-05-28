@@ -22,10 +22,17 @@ If you want to run the examples inside a Flink Cluster run to start the Pulsar a
 docker-compose up
 ```
 
-When the cluster is up and running successfully run the following command:
+When the cluster is up and running successfully run the following command for redpanda:
+```shell
+./redpanda-setup.sh
+
+```
+
+or this command for kafka setup
 ```shell
 ./kafka-setup.sh
 ```
+
 
 ### Register UDF
 ```shell
