@@ -16,7 +16,7 @@ CREATE TABLE transactions (
 ) WITH (
     'connector' = 'kafka',
     'topic' = 'transactions',
-    'properties.bootstrap.servers' = 'kafka:29092',
+    'properties.bootstrap.servers' = 'redpanda:9092',
     'properties.group.id' = 'group.transactions',
     'format' = 'json',
     'scan.startup.mode' = 'earliest-offset'

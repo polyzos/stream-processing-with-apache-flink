@@ -15,7 +15,7 @@ CREATE TABLE transactions (
 ) WITH (
     'connector' = 'kafka',
     'topic' = 'transactions',
-    'properties.bootstrap.servers' = 'kafka:29092',
+    'properties.bootstrap.servers' = 'redpanda:9092',
     'properties.group.id' = 'group.transactions',
     'format' = 'json',
     'scan.startup.mode' = 'earliest-offset'
@@ -42,7 +42,7 @@ CREATE TABLE customers (
 ) WITH (
     'connector' = 'upsert-kafka',
     'topic' = 'customers',
-    'properties.bootstrap.servers' = 'kafka:29092',
+    'properties.bootstrap.servers' = 'redpanda:9092',
     'key.format' = 'raw',
     'value.format' = 'json',
     'properties.group.id' = 'group.customers'
@@ -77,7 +77,7 @@ CREATE TABLE debits (
 ) WITH (
     'connector' = 'kafka',
     'topic' = 'transactions.debits',
-    'properties.bootstrap.servers' = 'kafka:29092',
+    'properties.bootstrap.servers' = 'redpanda:9092',
     'properties.group.id' = 'group.transactions.debits',
     'format' = 'json',
     'scan.startup.mode' = 'earliest-offset'
@@ -99,7 +99,7 @@ CREATE TABLE credits (
 ) WITH (
     'connector' = 'kafka',
     'topic' = 'transactions.credits',
-    'properties.bootstrap.servers' = 'kafka:29092',
+    'properties.bootstrap.servers' = 'redpanda:9092',
     'properties.group.id' = 'group.transactions.credits',
     'format' = 'json',
     'scan.startup.mode' = 'earliest-offset'

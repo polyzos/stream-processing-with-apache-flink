@@ -24,7 +24,7 @@ docker-compose up
 
 When the cluster is up and running successfully run the following command:
 ```shell
-./setup.sh
+./kafka-setup.sh
 ```
 
 ### Register UDF
