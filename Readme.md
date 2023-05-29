@@ -11,6 +11,7 @@ This repository contains the code for the book **[Stream Processing: Hands-on wi
 ### Table of Contents
 1. [Environment Setup](#environment-setup)
 2. [Register UDF](#register-udf)
+3. [Deploy a JAR file](#deploy-a-jar-file)
 
 
 ### Environment Setup
@@ -53,4 +54,23 @@ SELECT
   serviceResponse, 
   responseTime 
 FROM sample, LATERAL TABLE(lookup(transactionId));
+```
+
+### Deploy a JAR file
+1. Package the application and create an executable jar file
+```shell
+mvn clan package
+```
+2. Copy it under the jar files to be included in the custom Flink images
+
+3. Start the cluster to build the new images by running
+```shell
+docker-compose up
+```
+
+4. Deploy the flink job
+```shell
+docker exec -it jobmanager ./bin/flink run \
+  --class io.streamingledger.datastream.BufferingStream \
+  jars/spf-0.1.0.jar
 ```

@@ -50,6 +50,7 @@ services:
     container_name: jobmanager
     ports:
       - "8081:8081"
+      - "9249:9249"
     command: jobmanager
     volumes:
       - ./jars/:/opt/flink/jars
@@ -58,32 +59,102 @@ services:
       - |
         FLINK_PROPERTIES=
         jobmanager.rpc.address: jobmanager
+        metrics.reporters: prom
+        metrics.reporter.prom.factory.class: org.apache.flink.metrics.prometheus.PrometheusReporterFactory
+        metrics.reporter.prom.port: 9249
+        state.backend.rocksdb.metrics.actual-delayed-write-rate: true
+        state.backend.rocksdb.metrics.background-errors: true
+        state.backend.rocksdb.metrics.block-cache-capacity: true
+        state.backend.rocksdb.metrics.estimate-num-keys: true
+        state.backend.rocksdb.metrics.estimate-live-data-size: true
+        state.backend.rocksdb.metrics.estimate-pending-compaction-bytes: true
+        state.backend.rocksdb.metrics.num-running-compactions: true
+        state.backend.rocksdb.metrics.compaction-pending: true
+        state.backend.rocksdb.metrics.is-write-stopped: true
+        state.backend.rocksdb.metrics.num-running-flushes: true
+        state.backend.rocksdb.metrics.mem-table-flush-pending: true
+        state.backend.rocksdb.metrics.block-cache-usage: true
+        state.backend.rocksdb.metrics.size-all-mem-tables: true
+        state.backend.rocksdb.metrics.num-live-versions: true
+        state.backend.rocksdb.metrics.block-cache-pinned-usage: true
+        state.backend.rocksdb.metrics.estimate-table-readers-mem: true
+        state.backend.rocksdb.metrics.num-snapshots: true
+        state.backend.rocksdb.metrics.num-entries-active-mem-table: true
+        state.backend.rocksdb.metrics.num-deletes-imm-mem-tables: true
   taskmanager1:
     build: .
     container_name: taskmanager1
     depends_on:
       - jobmanager
     command: taskmanager
+    ports:
+      - "9250:9249"
     volumes:
       - ./logs/flink/tm1:/opt/flink/temp
     environment:
       - |
         FLINK_PROPERTIES=
         jobmanager.rpc.address: jobmanager
-        taskmanager.numberOfTaskSlots: 2
+        taskmanager.numberOfTaskSlots: 5
+        metrics.reporters: prom
+        metrics.reporter.prom.factory.class: org.apache.flink.metrics.prometheus.PrometheusReporterFactory
+        metrics.reporter.prom.port: 9249
+        state.backend.rocksdb.metrics.actual-delayed-write-rate: true
+        state.backend.rocksdb.metrics.background-errors: true
+        state.backend.rocksdb.metrics.block-cache-capacity: true
+        state.backend.rocksdb.metrics.estimate-num-keys: true
+        state.backend.rocksdb.metrics.estimate-live-data-size: true
+        state.backend.rocksdb.metrics.estimate-pending-compaction-bytes: true
+        state.backend.rocksdb.metrics.num-running-compactions: true
+        state.backend.rocksdb.metrics.compaction-pending: true
+        state.backend.rocksdb.metrics.is-write-stopped: true
+        state.backend.rocksdb.metrics.num-running-flushes: true
+        state.backend.rocksdb.metrics.mem-table-flush-pending: true
+        state.backend.rocksdb.metrics.block-cache-usage: true
+        state.backend.rocksdb.metrics.size-all-mem-tables: true
+        state.backend.rocksdb.metrics.num-live-versions: true
+        state.backend.rocksdb.metrics.block-cache-pinned-usage: true
+        state.backend.rocksdb.metrics.estimate-table-readers-mem: true
+        state.backend.rocksdb.metrics.num-snapshots: true
+        state.backend.rocksdb.metrics.num-entries-active-mem-table: true
+        state.backend.rocksdb.metrics.num-deletes-imm-mem-tables: true
   taskmanager2:
     build: .
     container_name: taskmanager2
     depends_on:
       - jobmanager
     command: taskmanager
+    ports:
+      - "9251:9249"
     volumes:
       - ./logs/flink/tm2:/opt/flink/temp
     environment:
       - |
         FLINK_PROPERTIES=
         jobmanager.rpc.address: jobmanager
-        taskmanager.numberOfTaskSlots: 2
+        taskmanager.numberOfTaskSlots: 5
+        metrics.reporters: prom
+        metrics.reporter.prom.factory.class: org.apache.flink.metrics.prometheus.PrometheusReporterFactory
+        metrics.reporter.prom.port: 9249
+        state.backend.rocksdb.metrics.actual-delayed-write-rate: true
+        state.backend.rocksdb.metrics.background-errors: true
+        state.backend.rocksdb.metrics.block-cache-capacity: true
+        state.backend.rocksdb.metrics.estimate-num-keys: true
+        state.backend.rocksdb.metrics.estimate-live-data-size: true
+        state.backend.rocksdb.metrics.estimate-pending-compaction-bytes: true
+        state.backend.rocksdb.metrics.num-running-compactions: true
+        state.backend.rocksdb.metrics.compaction-pending: true
+        state.backend.rocksdb.metrics.is-write-stopped: true
+        state.backend.rocksdb.metrics.num-running-flushes: true
+        state.backend.rocksdb.metrics.mem-table-flush-pending: true
+        state.backend.rocksdb.metrics.block-cache-usage: true
+        state.backend.rocksdb.metrics.size-all-mem-tables: true
+        state.backend.rocksdb.metrics.num-live-versions: true
+        state.backend.rocksdb.metrics.block-cache-pinned-usage: true
+        state.backend.rocksdb.metrics.estimate-table-readers-mem: true
+        state.backend.rocksdb.metrics.num-snapshots: true
+        state.backend.rocksdb.metrics.num-entries-active-mem-table: true
+        state.backend.rocksdb.metrics.num-deletes-imm-mem-tables: true
   postgres:
     image: postgres:latest
     container_name: postgres
@@ -93,3 +164,25 @@ services:
       - POSTGRES_PASSWORD=postgres
     ports:
       - '5432:5432'
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    command:
+      - '--config.file=/etc/prometheus/config.yaml'
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus:/etc/prometheus
+  #      - ./prom_data:/prometheus
+  grafana:
+    image: grafana/grafana
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    restart: unless-stopped
+    environment:
+      - GF_SECURITY_ADMIN_USER=grafana
+      - GF_SECURITY_ADMIN_PASSWORD=grafana
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning
+      - ./grafana/dashboards:/var/lib/grafana/dashboards

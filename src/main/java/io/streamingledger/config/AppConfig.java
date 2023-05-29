@@ -11,6 +11,7 @@ import java.util.Properties;
 
 public class AppConfig {
     public static final String BOOTSTRAP_URL        = "localhost:19092";
+    public static final String BOOTSTRAP_URL_DOCKER = "redpanda:9092";
     public static final String ACCOUNTS_TOPIC       = "accounts";
     public static final String CUSTOMERS_TOPIC      = "customers";
     public static final String TRANSACTIONS_TOPIC   = "transactions";
