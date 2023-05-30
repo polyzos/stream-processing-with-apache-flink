@@ -6,7 +6,8 @@ import org.apache.flink.api.common.serialization.AbstractDeserializationSchema;
 
 import java.io.IOException;
 
-public class TransactionSerdes extends AbstractDeserializationSchema<Transaction> {
+public class TransactionSerdes
+        extends AbstractDeserializationSchema<Transaction> {
     private ObjectMapper mapper;
 
     @Override

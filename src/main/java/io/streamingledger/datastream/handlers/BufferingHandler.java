@@ -23,25 +23,35 @@ public class BufferingHandler
 
         customerState = getRuntimeContext()
                 .getState(
-                        new ValueStateDescriptor<Customer>("customerState", Customer.class)
+                        new ValueStateDescriptor<>(
+                                "customerState",
+                                Customer.class
+                        )
                 );
 
         transactionState = getRuntimeContext()
                 .getState(
-                        new ValueStateDescriptor<Transaction>("transactionState", Transaction.class)
+                        new ValueStateDescriptor<>(
+                                "transactionState",
+                                Transaction.class
+                        )
                 );
     }
 
     @Override
     public void processElement1(Transaction transaction,
-                                CoProcessFunction<Transaction, Customer, TransactionEnriched>.Context context,
+                                CoProcessFunction<Transaction, Customer,
+                                        TransactionEnriched>.Context context,
                                 Collector<TransactionEnriched> collector) throws Exception {
         TransactionEnriched enrichedEvent = new TransactionEnriched();
         enrichedEvent.setTransaction(transaction);
 
         Customer customer = customerState.value();
         if (customer == null) {
-            logger.warn("Failed to find state for customer '{}' - buffering transaction.", transaction.getAccountId());
+            logger.warn(
+                    "Failed to find state for customer '{}' - buffering transaction.",
+                    transaction.getAccountId()
+            );
             transactionState.update(transaction);
         } else {
             enrichedEvent.setCustomer(customer);
@@ -51,15 +61,20 @@ public class BufferingHandler
 
     @Override
     public void processElement2(Customer customer,
-                                CoProcessFunction<Transaction, Customer, TransactionEnriched>.Context context,
+                                CoProcessFunction<Transaction, Customer,
+                                        TransactionEnriched>.Context context,
                                 Collector<TransactionEnriched> collector) throws Exception {
         customerState.update(customer);
 
         // check if there is any transaction record waiting for a customer event to arrive
         Transaction transaction = transactionState.value();
         if (transaction != null) {
-            logger.info("Found a buffering transaction and sending it downstream.");
-            collector.collect(new TransactionEnriched(transaction, customer));
+            logger.info(
+                    "Found a buffering transaction and sending it downstream."
+            );
+            collector.collect(
+                    new TransactionEnriched(transaction, customer)
+            );
 
             // if there was a transaction we buffered, clear the state
             transactionState.clear();

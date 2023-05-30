@@ -1,59 +1,35 @@
-package io.streamingledger.datastream;
+package io.streamingledger.datastream.sideoutputs;
 
 import io.streamingledger.config.AppConfig;
-import io.streamingledger.datastream.handlers.BufferingHandler;
 import io.streamingledger.datastream.serdes.CustomerSerdes;
 import io.streamingledger.datastream.serdes.TransactionSerdes;
+import io.streamingledger.datastream.sideoutputs.handlers.EnrichmentHandler;
 import io.streamingledger.models.Customer;
 import io.streamingledger.models.Transaction;
 import io.streamingledger.models.TransactionEnriched;
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
-import org.apache.flink.api.common.restartstrategy.RestartStrategies;
-import org.apache.flink.api.common.time.Time;
+import org.apache.flink.configuration.Configuration;
 import org.apache.flink.connector.kafka.source.KafkaSource;
 import org.apache.flink.connector.kafka.source.enumerator.initializer.OffsetsInitializer;
-import org.apache.flink.contrib.streaming.state.EmbeddedRocksDBStateBackend;
 import org.apache.flink.streaming.api.datastream.DataStream;
-import org.apache.flink.streaming.api.environment.CheckpointConfig;
+import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.flink.util.OutputTag;
 
 import java.time.Duration;
+import java.util.Properties;
 
-public class BufferingStream {
-    private static final String checkpointsDir  = String.format("file://%s/temp/checkpoints", System.getProperty("user.dir"));
-    private static final String rocksDBStateDir  = String.format("file://%s/temp/state/rocksdb/", System.getProperty("user.dir"));
-
-    private static final Logger logger
-            = LoggerFactory.getLogger(BufferingStream.class);
-
+public class EnrichmentStream {
     public static void main(String[] args) throws Exception {
-        logger.info("Setting checkpoint path {} and state path {}.", checkpointsDir, rocksDBStateDir);
+        // 1. Initialize the execution environment
         var environment = StreamExecutionEnvironment
-                .getExecutionEnvironment();
+                .createLocalEnvironmentWithWebUI(new Configuration());
 
-        // Checkpoint Configurations
-        environment.enableCheckpointing(5000);
-        environment.getCheckpointConfig().setMinPauseBetweenCheckpoints(100);
-        environment.getCheckpointConfig().setCheckpointStorage(checkpointsDir);
-
-        var stateBackend = new EmbeddedRocksDBStateBackend();
-        stateBackend.setDbStoragePath(rocksDBStateDir);
-        environment.setStateBackend(stateBackend);
-
-        environment.getCheckpointConfig().setExternalizedCheckpointCleanup(
-                CheckpointConfig.ExternalizedCheckpointCleanup.RETAIN_ON_CANCELLATION
-        );
-
-        // Configure Restart Strategy
-        environment.setRestartStrategy(
-                RestartStrategies.fixedDelayRestart(5, Time.seconds(5))
-        );
+        environment.setParallelism(1);
 
         // 2. Initialize Customer Source
         KafkaSource<Customer> customerSource = KafkaSource.<Customer>builder()
-                .setBootstrapServers(AppConfig.BOOTSTRAP_URL_DOCKER)
+                .setBootstrapServers(AppConfig.BOOTSTRAP_URL)
                 .setTopics(AppConfig.CUSTOMERS_TOPIC)
                 .setGroupId("group.finance.customers")
                 .setStartingOffsets(OffsetsInitializer.earliest())
@@ -68,7 +44,7 @@ public class BufferingStream {
 
         // 3. Initialize Transactions Source
         KafkaSource<Transaction> txnSource = KafkaSource.<Transaction>builder()
-                .setBootstrapServers(AppConfig.BOOTSTRAP_URL_DOCKER)
+                .setBootstrapServers(AppConfig.BOOTSTRAP_URL)
                 .setTopics(AppConfig.TRANSACTIONS_TOPIC)
                 .setGroupId("group.finance.transactions")
                 .setStartingOffsets(OffsetsInitializer.earliest())
@@ -86,25 +62,25 @@ public class BufferingStream {
                 .name("TransactionSource")
                 .uid("TransactionSource");
 
-        // 6. Data Enrichment
-        DataStream<TransactionEnriched> enrichedStream =
+        final OutputTag<TransactionEnriched> missingStateTag
+                = new OutputTag<>("missingState"){};
+
+        SingleOutputStreamOperator<TransactionEnriched> enrichedStream =
                 transactionStream
                         .keyBy(Transaction::getCustomerId)
-                        .connect(
-                                customerStream
-                                        .keyBy(Customer::getCustomerId)
-                        )
-                .process(new BufferingHandler())
-                .uid("CustomerLookup")
-                .name("CustomerLookup");
+                        .connect(customerStream.keyBy(Customer::getCustomerId))
+                        .process(new EnrichmentHandler(missingStateTag))
+                        .uid("EnrichmentHandler")
+                        .name("EnrichmentHandler");
 
-        // 7. Print the results
-        enrichedStream
+        DataStream<TransactionEnriched> missingStateStream =
+                enrichedStream
+                        .getSideOutput(missingStateTag);
+        missingStateStream
                 .print()
-                .uid("print")
-                .name("print");
+                .uid("missingStatePrint")
+                .name("missingStatePrint");
 
-        // 8. Execute the program
-        environment.execute("Data Enrichment Stream");
+        environment.execute("Data Enrichment Stream - Missing State and Side Outputs");
     }
 }
