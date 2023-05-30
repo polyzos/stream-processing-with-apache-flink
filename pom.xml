@@ -22,7 +22,7 @@
         <maven-compiler-plugin.version>3.10.1</maven-compiler-plugin.version>
 
         <kafka.version>3.4.0</kafka.version>
-        <flink.version>1.17.0</flink.version>
+        <flink.version>1.17.1</flink.version>
         <lombok.version>1.18.26</lombok.version>
         <logback.version>1.2.11</logback.version>
         <rocksdb.version>6.29.4</rocksdb.version>

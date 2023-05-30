@@ -32,11 +32,9 @@ public class SQLRunner {
                 .executeSql(Queries.CREATE_TXN_TABLE)
                 .print();
 
-
         tableEnvironment
                 .executeSql("SHOW TABLES")
                 .print();
-
 
         tableEnvironment
                 .executeSql("DESCRIBE transactions")
