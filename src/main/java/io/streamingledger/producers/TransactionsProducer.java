@@ -13,6 +13,8 @@ import java.io.IOException;
 import java.util.Iterator;
 import java.util.stream.Stream;
 
+import static io.streamingledger.utils.StreamingUtils.closeProducer;
+
 public class TransactionsProducer {
     private static final Logger logger
             = LoggerFactory.getLogger(TransactionsProducer.class);
@@ -35,30 +37,27 @@ public class TransactionsProducer {
         logger.info("Generating transactions ...");
 
         var count = 0;
-        while (true) {
-            for (Iterator<Transaction> it = transactions.iterator(); it.hasNext(); ) {
-                Transaction transaction = it.next();
-                if (slitTransactions) {
-                    if (transaction.getType().equals("Credit")) {
-                        StreamingUtils.handleMessage(txnProducer, AppConfig.CREDITS_TOPIC, transaction.getTransactionId(), transaction);
-                    } else {
-                        StreamingUtils.handleMessage(txnProducer, AppConfig.DEBITS_TOPIC, transaction.getTransactionId(), transaction);
-
-                    }
+        for (Iterator<Transaction> it = transactions.iterator(); it.hasNext(); ) {
+            Transaction transaction = it.next();
+            if (slitTransactions) {
+                if (transaction.getType().equals("Credit")) {
+                    StreamingUtils.handleMessage(txnProducer, AppConfig.CREDITS_TOPIC, transaction.getTransactionId(), transaction);
                 } else {
-                    Thread.sleep(50);
-                    StreamingUtils.handleMessage(txnProducer, AppConfig.TRANSACTIONS_TOPIC, transaction.getTransactionId(), transaction);
+                    StreamingUtils.handleMessage(txnProducer, AppConfig.DEBITS_TOPIC, transaction.getTransactionId(), transaction);
+
                 }
-                count += 1;
-                if (count % 10000 == 0) {
-                    logger.info("Total so far {}.", count);
-                }
+            } else {
+                StreamingUtils.handleMessage(txnProducer, AppConfig.TRANSACTIONS_TOPIC, transaction.getTransactionId(), transaction);
+            }
+            count += 1;
+            if (count % 10000 == 0) {
+                logger.info("Total so far {}.", count);
             }
         }
 
-//        logger.info("Total transactions sent '{}'.", count);
-//
-//        logger.info("Closing Producers ...");
-//        closeProducer(txnProducer);
+        logger.info("Total transactions sent '{}'.", count);
+
+        logger.info("Closing Producers ...");
+        closeProducer(txnProducer);
     }
 }
