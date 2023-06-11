@@ -3,7 +3,7 @@ package io.streamingledger.datastream.sideoutputs;
 import io.streamingledger.config.AppConfig;
 import io.streamingledger.datastream.serdes.CustomerSerdes;
 import io.streamingledger.datastream.serdes.TransactionSerdes;
-import io.streamingledger.datastream.sideoutputs.handlers.EnrichmentHandler;
+import io.streamingledger.datastream.sideoutputs.handlers.LateDataHandler;
 import io.streamingledger.models.Customer;
 import io.streamingledger.models.Transaction;
 import io.streamingledger.models.TransactionEnriched;
@@ -17,29 +17,14 @@ import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.util.OutputTag;
 
 import java.time.Duration;
-import java.util.Properties;
 
-public class EnrichmentStream {
+public class LateDataStream {
     public static void main(String[] args) throws Exception {
         // 1. Initialize the execution environment
         var environment = StreamExecutionEnvironment
                 .createLocalEnvironmentWithWebUI(new Configuration());
 
         environment.setParallelism(1);
-
-        // 2. Initialize Customer Source
-        KafkaSource<Customer> customerSource = KafkaSource.<Customer>builder()
-                .setBootstrapServers(AppConfig.BOOTSTRAP_URL)
-                .setTopics(AppConfig.CUSTOMERS_TOPIC)
-                .setGroupId("group.finance.customers")
-                .setStartingOffsets(OffsetsInitializer.earliest())
-                .setValueOnlyDeserializer(new CustomerSerdes())
-                .build();
-
-        DataStream<Customer> customerStream = environment
-                .fromSource(customerSource, WatermarkStrategy.forMonotonousTimestamps(), "Customer Source")
-                .name("CustomerSource")
-                .uid("CustomerSource");
 
 
         // 3. Initialize Transactions Source
@@ -53,7 +38,7 @@ public class EnrichmentStream {
 
 
         WatermarkStrategy<Transaction> watermarkStrategy = WatermarkStrategy
-                .<Transaction>forBoundedOutOfOrderness(Duration.ofSeconds(20))
+                .<Transaction>forBoundedOutOfOrderness(Duration.ofSeconds(2))
                 .withTimestampAssigner((txn, timestamp) -> txn.getEventTime());
 
         DataStream<Transaction> transactionStream = environment
@@ -62,18 +47,16 @@ public class EnrichmentStream {
                 .name("TransactionSource")
                 .uid("TransactionSource");
 
-        final OutputTag<TransactionEnriched> missingStateTag
+        final OutputTag<Transaction> missingStateTag
                 = new OutputTag<>("missingState"){};
 
-        SingleOutputStreamOperator<TransactionEnriched> enrichedStream =
+        SingleOutputStreamOperator<Transaction> enrichedStream =
                 transactionStream
-                        .keyBy(Transaction::getCustomerId)
-                        .connect(customerStream.keyBy(Customer::getCustomerId))
-                        .process(new EnrichmentHandler(missingStateTag))
+                        .process(new LateDataHandler(missingStateTag))
                         .uid("EnrichmentHandler")
                         .name("EnrichmentHandler");
 
-        DataStream<TransactionEnriched> missingStateStream =
+        DataStream<Transaction> missingStateStream =
                 enrichedStream
                         .getSideOutput(missingStateTag);
         missingStateStream
