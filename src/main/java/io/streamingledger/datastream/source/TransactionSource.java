@@ -32,7 +32,7 @@ public class TransactionSource {
         WatermarkStrategy<Transaction> watermarkStrategy =
                 WatermarkStrategy.<Transaction>
                                 forBoundedOutOfOrderness(
-                                        Duration.ofSeconds(20)
+                                        Duration.ofSeconds(5)
                         )
                 .withTimestampAssigner(
                         (txn, timestamp) -> txn.getEventTime()

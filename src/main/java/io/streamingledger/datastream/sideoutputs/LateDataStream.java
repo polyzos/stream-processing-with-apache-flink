@@ -1,12 +1,9 @@
 package io.streamingledger.datastream.sideoutputs;
 
 import io.streamingledger.config.AppConfig;
-import io.streamingledger.datastream.serdes.CustomerSerdes;
 import io.streamingledger.datastream.serdes.TransactionSerdes;
 import io.streamingledger.datastream.sideoutputs.handlers.LateDataHandler;
-import io.streamingledger.models.Customer;
 import io.streamingledger.models.Transaction;
-import io.streamingledger.models.TransactionEnriched;
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.connector.kafka.source.KafkaSource;
@@ -38,7 +35,7 @@ public class LateDataStream {
 
 
         WatermarkStrategy<Transaction> watermarkStrategy = WatermarkStrategy
-                .<Transaction>forBoundedOutOfOrderness(Duration.ofSeconds(2))
+                .<Transaction>forBoundedOutOfOrderness(Duration.ofSeconds(5))
                 .withTimestampAssigner((txn, timestamp) -> txn.getEventTime());
 
         DataStream<Transaction> transactionStream = environment
@@ -47,22 +44,22 @@ public class LateDataStream {
                 .name("TransactionSource")
                 .uid("TransactionSource");
 
-        final OutputTag<Transaction> missingStateTag
-                = new OutputTag<>("missingState"){};
+        final OutputTag<Transaction> lateEventsOutputTag
+                = new OutputTag<>("lateEventsOutputTag"){};
 
-        SingleOutputStreamOperator<Transaction> enrichedStream =
+        SingleOutputStreamOperator<Transaction> stream =
                 transactionStream
-                        .process(new LateDataHandler(missingStateTag))
-                        .uid("EnrichmentHandler")
-                        .name("EnrichmentHandler");
+                        .process(new LateDataHandler(lateEventsOutputTag))
+                        .uid("LateDataHandler")
+                        .name("LateDataHandler");
 
-        DataStream<Transaction> missingStateStream =
-                enrichedStream
-                        .getSideOutput(missingStateTag);
-        missingStateStream
+        DataStream<Transaction> lateEventStream =
+                stream
+                        .getSideOutput(lateEventsOutputTag);
+        lateEventStream
                 .print()
-                .uid("missingStatePrint")
-                .name("missingStatePrint");
+                .uid("lateEventsPrint")
+                .name("lateEventsPrint");
 
         environment.execute("Data Enrichment Stream - Missing State and Side Outputs");
     }
