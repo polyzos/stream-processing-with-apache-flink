@@ -33,7 +33,6 @@ public class LateDataHandler
                     new Timestamp(context.timerService().currentWatermark())
             );
             context.output(lateEventsOutputTag, transaction);
-
         }
     }
 }
