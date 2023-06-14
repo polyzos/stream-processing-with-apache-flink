@@ -16,7 +16,7 @@ docker exec -it redpanda rpk \
 docker exec -it redpanda rpk \
     topic create \
     transactions.debits \
-    -p 3
+    -p 5
 
 docker exec -it redpanda rpk \
     topic create transactions \

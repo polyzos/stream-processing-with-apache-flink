@@ -19,12 +19,12 @@ docker exec -it kafka kafka-topics.sh \
 
 docker exec -it kafka kafka-topics.sh \
     --create --topic transactions.credit \
-    --partitions 3 \
+    --partitions 5 \
     --bootstrap-server localhost:9092
 
 docker exec -it kafka kafka-topics.sh \
     --create --topic transactions.debit \
-    --partitions 3 \
+    --partitions 5 \
     --bootstrap-server localhost:9092
 
 docker exec -it kafka kafka-topics.sh --bootstrap-server localhost:9092 --list
