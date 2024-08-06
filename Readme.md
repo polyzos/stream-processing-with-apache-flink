@@ -18,7 +18,7 @@ This repository contains the code for the book **[Stream Processing: Hands-on wi
 In order to run the code samples we will need a Kafka and Flink cluster up and running.
 You can also run the Flink examples from within your favorite IDE in which case you don't need a Flink Cluster.
 
-If you want to run the examples inside a Flink Cluster run to start the Redpanda and Flink clusters.
+If you want to run the examples inside a Flink Cluster run the following command to start the services.
 ```shell
 docker-compose up
 ```
